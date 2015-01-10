@@ -7,15 +7,12 @@
     "node": "0.10.x",
     "npm": "1.4.x"
   },
-  "scripts": {
-    "start": "grunt",
-    "test": "grunt test",
-    "postinstall": "bower install --config.interactive=false"
-  },
   "dependencies": {
+    "chalk": "latest",
     "express": "~4.10.1",
     "express-session": "~1.9.1",
-    "mqtt": "latest"
+    "mongodb": "latest",
+    "mqtt": "latest",
+    "socket.io": "^1.2.1"
   }
 }
-
