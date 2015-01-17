@@ -4,7 +4,7 @@
 
 This is my IOT course's project repository
 
-# 3D Model (made with sketchup)
+# 3D Model - [isoccupied.skp](https://github.com/Jossef/is-occupied/raw/master/3d-model/isoccupied.skp) (made with sketchup)
 ![image](https://cloud.githubusercontent.com/assets/1287098/5788090/6af21588-9e2b-11e4-8a48-3e9db37c7866.png)
 
 ![image](https://cloud.githubusercontent.com/assets/1287098/5788080/f4c70166-9e2a-11e4-8550-9a9ef678b0e5.png)
