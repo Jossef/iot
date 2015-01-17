@@ -10,8 +10,9 @@
         // External
         'ui.router',
         'ui.bootstrap',
+        'chart.js',
 
-        'btford.socket-io'
+        'socket-io'
     ]);
 
     // ......................................................

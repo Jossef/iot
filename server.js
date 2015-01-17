@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 (function () {
     'use strict';
     var expressPort = 8080;
@@ -13,8 +15,10 @@
     var expressApp = express();
     var http = require('http').Server(expressApp);
     var io = require('socket.io')(http);
+    var mongoClient = require('mongodb').MongoClient;
 
 
+    var devicesCollection;
     var occupiedCache = {};
 
     // --------------------------------
@@ -35,10 +39,36 @@
         client.on('publish', function (packet) {
             try {
                 var data = JSON.parse(packet.payload);
+                if (data.occupied == undefined) {
+                    // Bad input, ignoring
+                    return;
+                }
+
                 occupiedCache[client.id] = data.occupied;
                 console.log(chalk.bold.cyan('INCOMING'), client.id, '->', chalk.cyan(packet.payload));
 
-                io.emit('message', packet.payload);
+                devicesCollection.update({
+                        _id: client.id,
+                        occupied: data.occupied
+                    },
+                    {
+                        $push: {
+                            activities: {date: new Date(), occupied: data.occupied}
+                        }
+                    },
+                    true,
+                    function (err, c) {
+                        console.log(err);
+                    });
+
+                var message = {
+                    id: client.id,
+                    timestamp: new Date(),
+                    occupied: data.occupied
+                };
+
+                // Notify all
+                io.emit('message', message);
             }
             catch (ex) {
                 console.log(chalk.bold.red('ERROR'), ex);
@@ -50,7 +80,6 @@
     // --------------------------------
     // Mongo DB
 
-    var mongoClient = require('mongodb').MongoClient;
 
     var db = mongoClient.connect(mongoDBUrl, function (err, db) {
         if (err) {
@@ -61,18 +90,10 @@
 
             console.log(chalk.bold.green('CONNECTED'), 'mongodb', chalk.cyan(mongoDBUrl));
 
-            db.createCollection('history', function (err, collection) {
+            db.createCollection('devices', function (err, collection) {
             });
 
-            var collection = db.collection('history');
-            var doc1 = {'hello': 'doc1'};
-            var doc2 = {'hello': 'doc2'};
-            var lotsOfDocs = [{'hello': 'doc3'}, {'hello': 'doc4'}];
-
-            collection.insert(doc2, {w: 1}, function (err, result) {
-            });
-            collection.insert(lotsOfDocs, {w: 1}, function (err, result) {
-            });
+            devicesCollection = db.collection('devices');
         }
     });
 
@@ -102,7 +123,8 @@
     console.log(chalk.bold.yellow('LISTENING'), 'mqtt', chalk.cyan(mqttIPAddress), chalk.cyan(mqttPort));
 
     process.on('uncaughtException', function (err) {
-        // Ignored Purposely (mqtt client disconnection can cause ECONNRESET
+        // Ignored Purposely (mqtt client disconnection can cause ECONNRESET)
+        // so this type of unhandled errors go here instead of crashing the process
     });
 
 })();

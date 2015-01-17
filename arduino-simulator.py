@@ -7,6 +7,6 @@ if len(sys.argv[1:]) != 2:
     exit()
 
 client = mqtt.Client(client_id=sys.argv[1])
-client.connect("10.0.0.9", 1883)
+client.connect("127.0.0.1", 1883)
 client.publish("messages", '{"occupied":'+sys.argv[2]+'}', 0)
 client.disconnect()
