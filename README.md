@@ -2,7 +2,6 @@
 ![is occupied logo](https://cloud.githubusercontent.com/assets/1287098/5789765/15fccfb8-9e81-11e4-9f50-809c1f2ddb5e.png)
 
 
-This is my IOT course's project repository
 
 # 3D Model - [isoccupied.skp](https://github.com/Jossef/is-occupied/raw/master/3d-model/isoccupied.skp) (made with sketchup)
 ![image](https://cloud.githubusercontent.com/assets/1287098/5788090/6af21588-9e2b-11e4-8a48-3e9db37c7866.png)
