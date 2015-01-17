@@ -20,18 +20,30 @@
     // --------------------------------
     // MQTT
 
-    var mqttServer = mqtt.createServer(function (client) {
+    var mqttBroker = mqtt.createServer(function (client) {
         client.on('connect', function (packet) {
-            client.id = packet.clientId;
-            client.connack({returnCode: 0});
+            try {
+
+                client.id = packet.clientId;
+                client.connack({returnCode: 0});
+            }
+            catch (ex) {
+                console.log(chalk.bold.red('ERROR'), ex);
+            }
         });
 
         client.on('publish', function (packet) {
-            var data = JSON.parse(packet.payload);
-            occupiedCache[client.id] = data.occupied;
-            console.log(chalk.bold.cyan('INCOMING'), client.id, '->' , chalk.cyan(packet.payload));
+            try {
+                var data = JSON.parse(packet.payload);
+                occupiedCache[client.id] = data.occupied;
+                console.log(chalk.bold.cyan('INCOMING'), client.id, '->', chalk.cyan(packet.payload));
 
-            io.emit('message', packet.payload );
+                io.emit('message', packet.payload);
+            }
+            catch (ex) {
+                console.log(chalk.bold.red('ERROR'), ex);
+            }
+
         });
     });
 
@@ -84,9 +96,13 @@
     // --------------------------------
     // Listen
     http.listen(expressPort, expressIPAddress);
-    mqttServer.listen(mqttPort, mqttIPAddress);
+    mqttBroker.listen(mqttPort, mqttIPAddress);
 
     console.log(chalk.bold.yellow('LISTENING'), 'express', chalk.cyan(expressIPAddress), chalk.cyan(expressPort));
     console.log(chalk.bold.yellow('LISTENING'), 'mqtt', chalk.cyan(mqttIPAddress), chalk.cyan(mqttPort));
+
+    process.on('uncaughtException', function (err) {
+        // Ignored Purposely (mqtt client disconnection can cause ECONNRESET
+    });
 
 })();
