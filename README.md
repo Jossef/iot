@@ -1,4 +1,6 @@
-# Is Occupied
+
+![is occupied logo](https://cloud.githubusercontent.com/assets/1287098/5789765/15fccfb8-9e81-11e4-9f50-809c1f2ddb5e.png)
+
 
 This is my IOT course's project repository
 
