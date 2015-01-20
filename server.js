@@ -17,26 +17,27 @@
     var io = require('socket.io')(http);
     var mongoClient = require('mongodb').MongoClient;
 
-
     var devicesCollection;
     var occupiedCache = {};
 
     // --------------------------------
     // MQTT
 
-    var mqttBroker = mqtt.createServer(function (client) {
-        client.on('connect', function (packet) {
-            try {
 
-                client.id = packet.clientId;
-                client.connack({returnCode: 0});
+    var mqttBroker = mqtt.createServer(function (mqttClient) {
+        mqttClient.on('connect', function (packet) {
+            try {
+                mqttClient.id = packet.clientId;
+
+                // Send a response ACK
+                mqttClient.connack({returnCode: 0});
             }
             catch (ex) {
-                console.log(chalk.bold.red('ERROR'), ex);
+                errorHandler(ex);
             }
         });
 
-        client.on('publish', function (packet) {
+        mqttClient.on('publish', function (packet) {
             try {
                 var data = JSON.parse(packet.payload);
                 if (data.occupied == undefined) {
@@ -44,25 +45,26 @@
                     return;
                 }
 
-                occupiedCache[client.id] = data.occupied;
-                console.log(chalk.bold.cyan('INCOMING'), client.id, '->', chalk.cyan(packet.payload));
+                occupiedCache[mqttClient.id] = data.occupied;
+                console.log(chalk.bold.cyan('INCOMING'), mqttClient.id, '->', chalk.cyan(packet.payload));
 
-                devicesCollection.update({
-                        _id: client.id,
-                        occupied: data.occupied
-                    },
+                devicesCollection.update(
+                    { _id: mqttClient.id },
                     {
+                        $setOnInsert: {foo: "bar"},
+                        $set: {
+                            occupied: data.occupied
+                        },
                         $push: {
                             activities: {date: new Date(), occupied: data.occupied}
                         }
                     },
-                    true,
-                    function (err, c) {
-                        console.log(err);
-                    });
+                    {
+                        upsert: true
+                    }, errorHandler);
 
                 var message = {
-                    id: client.id,
+                    id: mqttClient.id,
                     timestamp: new Date(),
                     occupied: data.occupied
                 };
@@ -71,7 +73,7 @@
                 io.emit('message', message);
             }
             catch (ex) {
-                console.log(chalk.bold.red('ERROR'), ex);
+                errorHandler(ex);
             }
 
         });
@@ -90,12 +92,12 @@
 
             console.log(chalk.bold.green('CONNECTED'), 'mongodb', chalk.cyan(mongoDBUrl));
 
-            db.createCollection('devices', function (err, collection) {
-            });
+            db.createCollection('devices', errorHandler);
 
             devicesCollection = db.collection('devices');
         }
     });
+
 
     // --------------------------------
     // Express JS
@@ -121,6 +123,16 @@
 
     console.log(chalk.bold.yellow('LISTENING'), 'express', chalk.cyan(expressIPAddress), chalk.cyan(expressPort));
     console.log(chalk.bold.yellow('LISTENING'), 'mqtt', chalk.cyan(mqttIPAddress), chalk.cyan(mqttPort));
+
+
+    // --------------------------------
+    // Error Handlers
+
+    function errorHandler(error) {
+        if (error) {
+            console.log(chalk.bold.red('ERROR'), error);
+        }
+    }
 
     process.on('uncaughtException', function (err) {
         // Ignored Purposely (mqtt client disconnection can cause ECONNRESET)

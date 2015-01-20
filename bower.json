@@ -19,6 +19,7 @@
     "angular-chart.js": "~0.3.14",
     "chart.js": "~0.1.0",
     "bootswatch-dist": "3.3.1+2-readable",
-    "ng-socket-io": "~0.2.0"
+    "ng-socket-io": "~0.2.0",
+    "angular-audio": "~1.4.1"
   }
 }

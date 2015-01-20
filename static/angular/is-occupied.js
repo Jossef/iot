@@ -11,6 +11,7 @@
         'ui.router',
         'ui.bootstrap',
         'chart.js',
+        'ngAudio',
 
         'socket-io'
     ]);
