@@ -9,7 +9,7 @@
             var vm = $scope;
             vm.messages = [];
 
-            socket.on('message', function (message) {
+            socket.on('devices:update', function (message) {
                 vm.messages.push({date: new Date(), message: message});
                 vm.playSound();
 

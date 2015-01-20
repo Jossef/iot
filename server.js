@@ -14,12 +14,11 @@
     var path = require("path");
     var expressApp = express();
     var http = require('http').Server(expressApp);
-    var io = require('socket.io')(http);
+    var webSockets = require('socket.io')(http);
     var mongoClient = require('mongodb').MongoClient;
+    var events = require('events');
 
-    var devicesCollection;
-    var occupiedCache = {};
-
+    var db = {};
     // --------------------------------
     // MQTT
 
@@ -44,33 +43,8 @@
                     // Bad input, ignoring
                     return;
                 }
-
-                occupiedCache[mqttClient.id] = data.occupied;
                 console.log(chalk.bold.cyan('INCOMING'), mqttClient.id, '->', chalk.cyan(packet.payload));
-
-                devicesCollection.update(
-                    { _id: mqttClient.id },
-                    {
-                        $setOnInsert: {foo: "bar"},
-                        $set: {
-                            occupied: data.occupied
-                        },
-                        $push: {
-                            activities: {date: new Date(), occupied: data.occupied}
-                        }
-                    },
-                    {
-                        upsert: true
-                    }, errorHandler);
-
-                var message = {
-                    id: mqttClient.id,
-                    timestamp: new Date(),
-                    occupied: data.occupied
-                };
-
-                // Notify all
-                io.emit('message', message);
+                onDeviceOccupationUpdate(mqttClient.id, data.occupied)
             }
             catch (ex) {
                 errorHandler(ex);
@@ -83,7 +57,7 @@
     // Mongo DB
 
 
-    var db = mongoClient.connect(mongoDBUrl, function (err, db) {
+    mongoClient.connect(mongoDBUrl, function (err, mongoContext) {
         if (err) {
             console.error(chalk.red('Could not connect to MongoDB!'));
             console.log(chalk.red(err));
@@ -92,9 +66,9 @@
 
             console.log(chalk.bold.green('CONNECTED'), 'mongodb', chalk.cyan(mongoDBUrl));
 
-            db.createCollection('devices', errorHandler);
+            mongoContext.createCollection('devices', errorHandler);
+            db.devices = mongoContext.collection('devices');
 
-            devicesCollection = db.collection('devices');
         }
     });
 
@@ -106,7 +80,16 @@
     expressApp.use('/static/', express.static(path.join(__dirname, 'static')));
 
     // REST API
-    expressApp.get("/api/messages/:id", function (request, response) {
+    expressApp.get("/api/devices/", function (request, response) {
+
+    });
+
+    expressApp.get("/api/devices/:id", function (request, response) {
+
+        var deviceId = request.params.id;
+        db.devices.findOne({_id: deviceId}, function (err, device) {
+            response.json(device);
+        });
 
     });
 
@@ -139,4 +122,48 @@
         // so this type of unhandled errors go here instead of crashing the process
     });
 
+    // -----------------------
+
+    // TODO export to different module:
+
+    function onDeviceOccupationUpdate(deviceId, occupied) {
+
+        var now = new Date();
+
+        db.devices.findOne({_id: deviceId}, function (err, device) {
+
+            var shouldNotify = true;
+            if (device) {
+                shouldNotify = device.occupied != occupied;
+            }
+
+            // Persist in database
+            db.devices.update(
+                {_id: deviceId},
+                {
+                    $set: {
+                        occupied: occupied,
+                        lastActive: now
+                    }
+                },
+                {
+                    upsert: true
+                }, errorHandler);
+
+            if (shouldNotify) {
+
+                // PUB/SUB via web sockets
+                var message = {
+                    id: deviceId,
+                    timestamp: now,
+                    occupied: occupied
+                };
+
+                // Notify all subscribers
+                webSockets.emit('devices:update', message);
+            }
+
+        });
+
+    }
 })();
