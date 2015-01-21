@@ -156,7 +156,7 @@
                 // PUB/SUB via web sockets
                 var message = {
                     _id: deviceId,
-                    timestamp: now,
+                    lastActive: now,
                     occupied: occupied
                 };
 

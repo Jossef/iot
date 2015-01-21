@@ -3,21 +3,34 @@
   font-family: "Roboto Slab", serif;
   font-weight: 700; }
 
-.device-list .item {
-  min-height: 200px;
-  border-radius: 2px;
-  border: 1px solid #bdbdbd;
-  margin-bottom: 20px;
-  transition: all 250ms;
-  padding: 5px 5px 5px 15px; }
-  .device-list .item.occupied {
-    color: white;
-    border: 1px solid #c62828;
-    background-color: #f44336; }
-  .device-list .item:hover {
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-    transform: translateY(-5px);
-    cursor: pointer; }
-  .device-list .item .title {
-    font-family: "Roboto Slab", serif;
-    font-size: 2em; }
+.device-list {
+  font-family: "Roboto Slab", serif; }
+  .device-list .item {
+    background-color: white;
+    min-height: 100px;
+    border-radius: 2px;
+    border: 1px solid #bdbdbd;
+    margin-bottom: 20px;
+    transition: all 250ms;
+    padding: 5px 5px 5px 15px; }
+    .device-list .item.occupied .icon {
+      color: #f44336; }
+    .device-list .item:hover {
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+      transform: translateY(-5px);
+      cursor: pointer; }
+    .device-list .item .title {
+      font-size: 2em; }
+    .device-list .item .icon {
+      color: #4caf50;
+      float: right;
+      font-size: 3em;
+      position: relative;
+      line-height: 100px;
+      padding-right: 15px;
+      top: -5px; }
+    .device-list .item .content {
+      float: left; }
+
+html, body {
+  background-color: #eeeeee; }

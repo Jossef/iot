@@ -19,9 +19,15 @@
     <div class="row device-list">
         <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="device in devices | filter:filter">
             <div class="item" ng-class="{'occupied':device.occupied}">
-                <p class="title">{{device._id | uppercase}}</p>
+                <div class="icon">
+                    <i ng-show="device.occupied" class="fa fa-exclamation-circle"></i>
+                    <i ng-hide="device.occupied" class="fa fa-check-circle"></i>
+                </div>
+                <div class="content">
+                    <p class="title">{{device._id}}</p>
 
-                <p class="">{{device.lastActive | date:'medium'}}</p>
+                    <p class="">{{device.lastActive | date:'medium'}}</p>
+                </div>
             </div>
 
         </div>
