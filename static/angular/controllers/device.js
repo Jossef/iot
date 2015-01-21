@@ -8,6 +8,11 @@
         var deviceId = $routeParams.id;
         vm.device = SharedService.devices[deviceId];
 
+        vm.deviceHistory = [];
+        DeviceService.getDeviceHistory(deviceId).success(function (deviceHistory) {
+            vm.deviceHistory = deviceHistory;
+        });
+
         vm.subscribeEmail = '';
         vm.subscribeEmailToDevice = function () {
 

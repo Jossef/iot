@@ -8,9 +8,31 @@
   border-radius: 2px;
   border: 1px solid #bdbdbd; }
 
+.spacer {
+  padding: 15px;
+  margin-top: 20px;
+  margin-bottom: 20px; }
+
 .device-info {
   transition: all 250ms;
   padding: 10px 5px 50px 15px; }
+  .device-info .history {
+    list-style: none;
+    padding-left: 0; }
+    .device-info .history li {
+      display: block; }
+  .device-info .title {
+    font-size: 2em; }
+  .device-info .icon {
+    color: #4caf50;
+    float: right;
+    font-size: 3em;
+    position: relative;
+    line-height: 100px;
+    padding-right: 15px;
+    top: -5px; }
+  .device-info .content {
+    float: left; }
 
 .device-list {
   font-family: "Roboto Slab", serif;

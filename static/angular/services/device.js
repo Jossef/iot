@@ -6,22 +6,36 @@
     app.factory("DeviceService", function ($http, socket) {
 
             return {
-                all: all,
-                get: get,
+                getAll: getAll,
+                getDevice: getDevice,
+                getDeviceHistory: getDeviceHistory,
+                getAllHistory: getAllHistory,
                 addDeviceEmailSubscription: addDeviceEmailSubscription,
                 subscribe: subscribe
             };
 
-            function all() {
+            function getAll() {
                 return $http.get('/api/devices');
             }
 
-            function get(deviceId) {
+            function getDevice(deviceId) {
                 if (!deviceId) {
                     throw new Error('device id cannot be null')
                 }
 
                 return $http.get('/api/devices/' + deviceId);
+            }
+
+            function getAllHistory() {
+                return $http.get('/api/devices/history');
+            }
+
+            function getDeviceHistory(deviceId) {
+                if (!deviceId) {
+                    throw new Error('device id cannot be null')
+                }
+
+                return $http.get('/api/devices/' + deviceId + '/history');
             }
 
             function subscribe(scope, callback) {

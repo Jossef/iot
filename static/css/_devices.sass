@@ -7,10 +7,40 @@ $item-height: 100px
   border-radius: 2px
   border: 1px solid #BDBDBD
 
+.spacer
+  padding: 15px
+  margin-top: 20px
+  margin-bottom: 20px
+
+
 .device-info
   @extend .paper
   transition: all 250ms
   padding: 10px 5px 50px 15px
+
+  .history
+    list-style: none
+    padding-left: 0
+
+    li
+      display: block
+
+  .title
+    font-size: 2em
+
+  .icon
+    color: $md-green-500
+    float: right
+    font-size: 3em
+    position: relative
+    line-height: $item-height
+    padding-right: 15px
+    top: -5px
+
+  .content
+    float: left
+
+
 
 .device-list
   font-family: 'Roboto Slab', serif

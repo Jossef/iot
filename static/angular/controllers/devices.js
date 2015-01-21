@@ -9,6 +9,8 @@
         vm.common = SharedService;
 
 
+
+
         vm.getDeviceOccupation = function(device)
         {
             return (new Date().getTime() - new Date(device.lastActive).getTime())

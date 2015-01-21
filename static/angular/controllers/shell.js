@@ -15,7 +15,7 @@
                 }
             }, true);
 
-            DeviceService.all().success(function (devices) {
+            DeviceService.getAll().success(function (devices) {
 
                 if (!devices) {
                     return;
@@ -50,19 +50,6 @@
                 }
             });
 
-            // ------------------
-            // Experiments :
-
-            vm.labels = ['2006', '2007', '2008', '2009', '2010', '2011', '2012'];
-            vm.series = ['Series A'];
-
-            vm.data = [
-                [65, 59, 80, 81, 56, 55, 40]
-            ];
-
-            vm.playSound = function () {
-                SharedService.playNotificationSound();
-            }
 
         }
     );

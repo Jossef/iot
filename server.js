@@ -92,9 +92,10 @@
 
     // REST API
 
-    expressApp.get("/api/history/", function (request, response) {
-        db.devices.find({}, {_id: 1, occupied: 1, occupiedSince: 1, lastActive: 1}).toArray(function (err, devices) {
-            response.json(devices);
+    expressApp.get("/api/devices/history/", function (request, response) {
+
+        db.devices.find({history: {$exists: true}}, {_id: 1, history: 1,}).toArray(function (err, history) {
+            response.json(history);
         });
     });
 
@@ -116,6 +117,23 @@
             response.json(device);
         });
 
+    });
+
+    expressApp.get("/api/devices/:id/history", function (request, response) {
+
+        var deviceId = request.params.id;
+
+        db.devices.findOne({_id: deviceId}, {
+            _id: 1,
+            history: 1
+        }, function (err, device) {
+            var history = [];
+            if (device && device.history) {
+                history = device.history;
+            }
+
+            response.json(history);
+        });
     });
 
     expressApp.post("/api/devices/:id/subscribe", function (request, response) {
@@ -197,15 +215,20 @@
                     }
                 }
 
+                var update = {
+                    occupied: occupied,
+                    lastActive: now
+                };
+
+                if (occupied) {
+                    update.occupiedSince = now;
+                }
+
                 // Persist in database
                 db.devices.update(
                     {_id: deviceId},
                     {
-                        $set: {
-                            occupied: occupied,
-                            lastActive: now,
-                            occupiedSince: now,
-                        }
+                        $set: update
                     },
                     {upsert: true},
                     errorHandler);
@@ -226,25 +249,26 @@
 
                     // Save history record
 
-                    if (!occupied)
-                    {
+                    if (!occupied) {
 
                         var duration = now.getTime() - device.occupiedSince.getTime();
+                        if (duration) {
 
-                        // Persist in database
-                        db.devices.update(
-                            {_id: deviceId},
-                            {
-                                $addToSet: {
-                                    history: {
-                                        begin: device.occupiedSince,
-                                        end: now,
-                                        duration: duration
+                            // Persist in database
+                            db.devices.update(
+                                {_id: deviceId},
+                                {
+                                    $addToSet: {
+                                        history: {
+                                            begin: device.occupiedSince,
+                                            end: now,
+                                            duration: duration
+                                        }
                                     }
-                                }
-                            },
-                            {},
-                            errorHandler);
+                                },
+                                {},
+                                errorHandler);
+                        }
 
                     }
 
@@ -259,6 +283,9 @@
     }
 
     function sendNotificationMail(device) {
+
+        // TODO remove me l8er
+        return;
 
         if (!device.subscribers) {
             return;
