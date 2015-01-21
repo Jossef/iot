@@ -12,6 +12,7 @@
         'ui.bootstrap',
         'chart.js',
         'ngAudio',
+        'angular-growl',
 
         'socket-io'
     ]);
@@ -21,7 +22,18 @@
     app.config(
         function ($stateProvider, $urlRouterProvider)
         {
-
+            $urlRouterProvider.otherwise("/");
+            $stateProvider
+                .state('default', {
+                    url: "/",
+                    templateUrl: "/static/views/main.html",
+                    controller: 'MainController'
+                })
+                .state('devices', {
+                    url: "/devices",
+                    templateUrl: "/static/views/devices.html",
+                    controller: 'DevicesController'
+                })
         });
 
     // ......................................................
@@ -50,4 +62,20 @@
                 return $delegate;
             });
         });
+
+
+    // ......................................................
+    // growl
+    app.config(
+        function (growlProvider)
+        {
+            growlProvider.globalReversedOrder(true);
+            growlProvider.globalTimeToLive(2000);
+            growlProvider.globalPosition('bottom-right');
+            growlProvider.globalDisableIcons(true);
+            growlProvider.globalDisableCloseButton(true);
+
+        });
+
+
 })();

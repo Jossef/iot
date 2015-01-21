@@ -20,6 +20,8 @@
     "chart.js": "~0.1.0",
     "bootswatch-dist": "3.3.1+2-readable",
     "ng-socket-io": "~0.2.0",
-    "angular-audio": "~1.4.1"
+    "angular-audio": "~1.4.1",
+    "angular-growl-v2": "~0.7.3",
+    "material-colors": "~1.0.0"
   }
 }

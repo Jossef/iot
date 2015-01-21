@@ -81,7 +81,9 @@
 
     // REST API
     expressApp.get("/api/devices/", function (request, response) {
-
+        db.devices.find().toArray(function (err, devices) {
+            response.json(devices);
+        });
     });
 
     expressApp.get("/api/devices/:id", function (request, response) {
@@ -146,15 +148,14 @@
                         lastActive: now
                     }
                 },
-                {
-                    upsert: true
-                }, errorHandler);
+                {upsert: true},
+                errorHandler);
 
             if (shouldNotify) {
 
                 // PUB/SUB via web sockets
                 var message = {
-                    id: deviceId,
+                    _id: deviceId,
                     timestamp: now,
                     occupied: occupied
                 };

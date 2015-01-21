@@ -3,17 +3,57 @@
 
     var app = angular.module('is-occupied');
 
-    app.controller("ShellController", function ($scope, socket, ngAudio) {
-            var notification = ngAudio.load('/static/audio/notification.mp3');
-
+    app.controller("ShellController", function ($scope, SharedService, DeviceService) {
             var vm = $scope;
+
             vm.messages = [];
 
-            socket.on('devices:update', function (message) {
-                vm.messages.push({date: new Date(), message: message});
-                vm.playSound();
+            vm.devices = SharedService.devices;
 
-            }).bindTo($scope);
+            $scope.$watchCollection('devices', function(newValue){
+                vm.devicesCount = 0;
+                if (newValue)
+                {
+                    vm.devicesCount = Object.keys(newValue).length;
+                }
+            }, true);
+
+            DeviceService.all().success(function (devices) {
+
+                if (!devices) {
+                    return;
+                }
+
+                angular.forEach(devices, function (device) {
+                    vm.devices[device._id] = device;
+                });
+
+            });
+
+            DeviceService.subscribe(vm, function (device) {
+
+                if (!device) {
+                    return;
+                }
+
+                var cachedDevice = vm.devices[device._id];
+
+                if (cachedDevice) {
+                    cachedDevice.occupied = device.occupied;
+                }
+                else {
+                    vm.devices[device._id] = device;
+                }
+
+                if (device.occupied == false)
+                {
+                    SharedService.playNotificationSound();
+                    SharedService.showNotification(device._id + ' unoccupied');
+                }
+            });
+
+            // ------------------
+            // Experiments :
 
             vm.labels = ['2006', '2007', '2008', '2009', '2010', '2011', '2012'];
             vm.series = ['Series A'];
@@ -23,7 +63,7 @@
             ];
 
             vm.playSound = function () {
-                notification.play();
+                SharedService.playNotificationSound();
             }
 
         }

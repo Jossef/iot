@@ -1,4 +1,23 @@
-.logo-img {
-  position: fixed;
-  width: 100px;
-  height: 100px; }
+@import url(http://fonts.googleapis.com/css?family=Roboto+Slab);
+.growl-item {
+  font-family: "Roboto Slab", serif;
+  font-weight: 700; }
+
+.device-list .item {
+  min-height: 200px;
+  border-radius: 2px;
+  border: 1px solid #bdbdbd;
+  margin-bottom: 20px;
+  transition: all 250ms;
+  padding: 5px 5px 5px 15px; }
+  .device-list .item.occupied {
+    color: white;
+    border: 1px solid #c62828;
+    background-color: #f44336; }
+  .device-list .item:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+    transform: translateY(-5px);
+    cursor: pointer; }
+  .device-list .item .title {
+    font-family: "Roboto Slab", serif;
+    font-size: 2em; }
