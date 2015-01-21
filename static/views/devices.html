@@ -17,7 +17,10 @@
 
 <div class="container">
     <div class="row device-list">
-        <div class="col-xs-12 col-sm-6 col-md-4" ng-repeat="device in devices | filter:filter">
+        <div class="col-xs-12 col-sm-6 col-md-4"
+             ng-repeat="device in devices | toArray: true | filter:filter"
+             ng-click="common.go('/devices/'+device._id)">
+
             <div class="item" ng-class="{'occupied':device.occupied}">
                 <div class="icon">
                     <i ng-show="device.occupied" class="fa fa-exclamation-circle"></i>
@@ -26,7 +29,9 @@
                 <div class="content">
                     <p class="title">{{device._id}}</p>
 
-                    <p class="">{{device.lastActive | date:'medium'}}</p>
+                    <p timer ng-show="device.occupied" start-time="device.occupiedSince" class="">
+                        {{minutes}} minutes, {{seconds}} seconds
+                    </p>
                 </div>
             </div>
 

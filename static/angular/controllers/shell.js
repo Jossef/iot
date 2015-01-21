@@ -5,9 +5,6 @@
 
     app.controller("ShellController", function ($scope, SharedService, DeviceService) {
             var vm = $scope;
-
-            vm.messages = [];
-
             vm.devices = SharedService.devices;
 
             $scope.$watchCollection('devices', function(newValue){
@@ -38,12 +35,13 @@
 
                 var cachedDevice = vm.devices[device._id];
 
-                if (cachedDevice) {
-                    cachedDevice.occupied = device.occupied;
+                if (!cachedDevice) {
+
+                    cachedDevice = device;
                 }
-                else {
-                    vm.devices[device._id] = device;
-                }
+
+                angular.extend(cachedDevice, device);
+                vm.devices[device._id] = cachedDevice;
 
                 if (device.occupied == false)
                 {

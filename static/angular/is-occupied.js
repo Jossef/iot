@@ -1,18 +1,19 @@
-(function ()
-{
+(function () {
     'use strict';
 
     var app = angular.module('is-occupied', [
 
         // Builtin
         'ngAnimate',
+        'ngRoute',
 
         // External
-        'ui.router',
         'ui.bootstrap',
         'chart.js',
         'ngAudio',
         'angular-growl',
+        'timer',
+        'angular.filter',
 
         'socket-io'
     ]);
@@ -20,40 +21,40 @@
     // ......................................................
     // SPA URL Route states
     app.config(
-        function ($stateProvider, $urlRouterProvider)
-        {
-            $urlRouterProvider.otherwise("/");
-            $stateProvider
-                .state('default', {
-                    url: "/",
+        function ($routeProvider) {
+
+            $routeProvider
+
+                .when('/', {
                     templateUrl: "/static/views/main.html",
                     controller: 'MainController'
                 })
-                .state('devices', {
-                    url: "/devices",
+                .when('/devices/:id', {
+                    templateUrl: "/static/views/device.html",
+                    controller: 'DeviceController'
+                })
+                .when('/devices', {
                     templateUrl: "/static/views/devices.html",
                     controller: 'DevicesController'
                 })
+                .otherwise({
+                    redirectTo: '/'
+                });
         });
 
     // ......................................................
     // Promises Fix
     app.config(
-        function ($provide)
-        {
-            $provide.decorator('$q', function ($delegate)
-            {
+        function ($provide) {
+            $provide.decorator('$q', function ($delegate) {
                 var defer = $delegate.defer;
-                $delegate.defer = function ()
-                {
+                $delegate.defer = function () {
                     var deferred = defer();
-                    deferred.promise.success = function (fn)
-                    {
+                    deferred.promise.success = function (fn) {
                         deferred.promise.then(fn);
                         return deferred.promise;
                     };
-                    deferred.promise.error = function (fn)
-                    {
+                    deferred.promise.error = function (fn) {
                         deferred.promise.then(null, fn);
                         return deferred.promise;
                     };
@@ -67,8 +68,7 @@
     // ......................................................
     // growl
     app.config(
-        function (growlProvider)
-        {
+        function (growlProvider) {
             growlProvider.globalReversedOrder(true);
             growlProvider.globalTimeToLive(2000);
             growlProvider.globalPosition('bottom-right');

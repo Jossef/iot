@@ -2,14 +2,27 @@
 
 $item-height: 100px
 
+.paper
+  background-color: #fff
+  border-radius: 2px
+  border: 1px solid #BDBDBD
+
+.device-info
+  @extend .paper
+  transition: all 250ms
+  padding: 10px 5px 50px 15px
+
 .device-list
   font-family: 'Roboto Slab', serif
+  -webkit-touch-callout: none
+  -webkit-user-select: none
+  -moz-user-select: none
+  -ms-user-select: none
+  user-select: none
 
   .item
-    background-color: #fff
+    @extend .paper
     min-height: $item-height
-    border-radius: 2px
-    border: 1px solid #BDBDBD
     margin-bottom: 20px
     transition: all 250ms
     padding: 5px 5px 5px 15px

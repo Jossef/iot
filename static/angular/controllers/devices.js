@@ -3,12 +3,16 @@
 
     var app = angular.module('is-occupied');
 
-    app.controller("DevicesController", function ($scope, socket, DeviceService, SharedService) {
+    app.controller("DevicesController", function ($scope, SharedService) {
         var vm = $scope;
-
-        vm.messages = [];
         vm.devices = SharedService.devices;
+        vm.common = SharedService;
 
+
+        vm.getDeviceOccupation = function(device)
+        {
+            return (new Date().getTime() - new Date(device.lastActive).getTime())
+        };
 
     });
 

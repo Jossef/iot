@@ -11,14 +11,24 @@
     var mqtt = require('mqtt');
     var chalk = require('chalk');
     var express = require("express");
+    var bodyParser = require('body-parser');
     var path = require("path");
     var expressApp = express();
     var http = require('http').Server(expressApp);
     var webSockets = require('socket.io')(http);
     var mongoClient = require('mongodb').MongoClient;
     var events = require('events');
+    var nodemailer = require('nodemailer');
+    var smtpTransport = require('nodemailer-smtp-transport');
+    var config = require('./config');
 
     var db = {};
+
+    // --------------------------------
+    // SMTP
+
+    var transporter = nodemailer.createTransport(smtpTransport(config.nodemailer));
+
     // --------------------------------
     // MQTT
 
@@ -76,12 +86,15 @@
     // --------------------------------
     // Express JS
 
+    // Parse application/json
+    expressApp.use(bodyParser.json())
+
     // Static files
     expressApp.use('/static/', express.static(path.join(__dirname, 'static')));
 
     // REST API
     expressApp.get("/api/devices/", function (request, response) {
-        db.devices.find().toArray(function (err, devices) {
+        db.devices.find({},{_id:1, occupied:1, occupiedSince:1, lastActive:1}).toArray(function (err, devices) {
             response.json(devices);
         });
     });
@@ -89,9 +102,37 @@
     expressApp.get("/api/devices/:id", function (request, response) {
 
         var deviceId = request.params.id;
-        db.devices.findOne({_id: deviceId}, function (err, device) {
+        db.devices.findOne({_id: deviceId},{_id:1, occupied:1, occupiedSince:1, lastActive:1}, function (err, device) {
             response.json(device);
         });
+
+    });
+
+    expressApp.post("/api/devices/:id/subscribe", function (request, response) {
+
+        var deviceId = request.params.id;
+        var body = request.body;
+
+        if (!body.email) {
+            return response.json({error: 'email must be provided'});
+        }
+
+        if (!validateEmail(body.email)) {
+            return response.json({error: 'invalid email provided'});
+        }
+
+        // Persist in database
+        db.devices.update(
+            {_id: deviceId},
+            {
+                $addToSet: {
+                    subscribers: body.email
+                }
+            },
+            {},
+            function (err, rowsAffected) {
+                response.json({success: new Boolean(rowsAffected)});
+            });
 
     });
 
@@ -132,11 +173,17 @@
 
         var now = new Date();
 
-        db.devices.findOne({_id: deviceId}, function (err, device) {
+        db.devices.findOne({_id: deviceId},
+            function (err, device) {
 
             var shouldNotify = true;
             if (device) {
                 shouldNotify = device.occupied != occupied;
+            }
+            else {
+                device = {
+                    occupiedSince: now
+                }
             }
 
             // Persist in database
@@ -145,7 +192,8 @@
                 {
                     $set: {
                         occupied: occupied,
-                        lastActive: now
+                        lastActive: now,
+                        occupiedSince: now,
                     }
                 },
                 {upsert: true},
@@ -157,14 +205,56 @@
                 var message = {
                     _id: deviceId,
                     lastActive: now,
-                    occupied: occupied
+                    occupied: occupied,
+                    occupiedSince: device.occupiedSince
                 };
 
                 // Notify all subscribers
                 webSockets.emit('devices:update', message);
+                sendNotificationMail(device);
             }
 
         });
 
+    }
+
+    function validateEmail(email) {
+        var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email);
+    }
+
+    function sendNotificationMail(device) {
+
+        if(!device.subscribers)
+        {
+            return;
+        }
+
+        var to = '';
+        device.subscribers.forEach(function(subsciber){
+            if (!to)
+            {
+                to += ', ';
+            }
+            to += subsciber;
+        });
+
+        // setup e-mail data with unicode symbols
+        var mailOptions = {
+            from: 'updaterdownloader@gmail.com', // sender address
+            to: to, // list of receivers
+            subject: device._id + ' is unoccupied', // Subject line
+            text: device._id + ' is unoccupied', // plaintext body
+            html: '<b>'+ device._id + 'is unoccupied ✔</b>' // html body
+        };
+
+        // send mail with defined transport object
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Message sent: ' + info.response);
+            }
+        });
     }
 })();

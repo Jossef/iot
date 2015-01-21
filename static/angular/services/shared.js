@@ -3,7 +3,7 @@
 
     var app = angular.module('is-occupied');
 
-    app.factory("SharedService", function (ngAudio, growl) {
+    app.factory("SharedService", function ($location, ngAudio, growl) {
 
         var notification = ngAudio.load('/static/audio/notification.mp3');
         var devices = {};
@@ -11,7 +11,8 @@
         return {
             devices: devices,
             playNotificationSound: playNotificationSound,
-            showNotification:showNotification
+            showNotification:showNotification,
+            go:go
         };
 
         function playNotificationSound() {
@@ -20,6 +21,10 @@
 
         function showNotification(message) {
             growl.success(message);
+        }
+
+        function go(path) {
+            $location.path(path);
         }
     });
 
