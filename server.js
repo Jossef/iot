@@ -64,7 +64,7 @@
     });
 
     // --------------------------------
-    // Mongo DB
+    // Mongo DB Init
 
 
     mongoClient.connect(mongoDBUrl, function (err, mongoContext) {
@@ -73,12 +73,10 @@
             console.log(chalk.red(err));
         }
         else {
-
             console.log(chalk.bold.green('CONNECTED'), 'mongodb', chalk.cyan(mongoDBUrl));
 
             mongoContext.createCollection('devices', errorHandler);
             db.devices = mongoContext.collection('devices');
-
         }
     });
 
@@ -93,8 +91,15 @@
     expressApp.use('/static/', express.static(path.join(__dirname, 'static')));
 
     // REST API
+
+    expressApp.get("/api/history/", function (request, response) {
+        db.devices.find({}, {_id: 1, occupied: 1, occupiedSince: 1, lastActive: 1}).toArray(function (err, devices) {
+            response.json(devices);
+        });
+    });
+
     expressApp.get("/api/devices/", function (request, response) {
-        db.devices.find({},{_id:1, occupied:1, occupiedSince:1, lastActive:1}).toArray(function (err, devices) {
+        db.devices.find({}, {_id: 1, occupied: 1, occupiedSince: 1, lastActive: 1}).toArray(function (err, devices) {
             response.json(devices);
         });
     });
@@ -102,7 +107,12 @@
     expressApp.get("/api/devices/:id", function (request, response) {
 
         var deviceId = request.params.id;
-        db.devices.findOne({_id: deviceId},{_id:1, occupied:1, occupiedSince:1, lastActive:1}, function (err, device) {
+        db.devices.findOne({_id: deviceId}, {
+            _id: 1,
+            occupied: 1,
+            occupiedSince: 1,
+            lastActive: 1
+        }, function (err, device) {
             response.json(device);
         });
 
@@ -176,46 +186,71 @@
         db.devices.findOne({_id: deviceId},
             function (err, device) {
 
-            var shouldNotify = true;
-            if (device) {
-                shouldNotify = device.occupied != occupied;
-            }
-            else {
-                device = {
-                    occupiedSince: now
+                var deviceStateChanged = true;
+
+                if (device) {
+                    deviceStateChanged = device.occupied != occupied;
                 }
-            }
-
-            // Persist in database
-            db.devices.update(
-                {_id: deviceId},
-                {
-                    $set: {
-                        occupied: occupied,
-                        lastActive: now,
-                        occupiedSince: now,
+                else {
+                    device = {
+                        occupiedSince: now
                     }
-                },
-                {upsert: true},
-                errorHandler);
+                }
 
-            if (shouldNotify) {
+                // Persist in database
+                db.devices.update(
+                    {_id: deviceId},
+                    {
+                        $set: {
+                            occupied: occupied,
+                            lastActive: now,
+                            occupiedSince: now,
+                        }
+                    },
+                    {upsert: true},
+                    errorHandler);
 
-                // PUB/SUB via web sockets
-                var message = {
-                    _id: deviceId,
-                    lastActive: now,
-                    occupied: occupied,
-                    occupiedSince: device.occupiedSince
-                };
+                if (deviceStateChanged) {
 
-                // Notify all subscribers
-                webSockets.emit('devices:update', message);
-                sendNotificationMail(device);
-            }
+                    // PUB/SUB via web sockets
+                    var message = {
+                        _id: deviceId,
+                        lastActive: now,
+                        occupied: occupied,
+                        occupiedSince: device.occupiedSince
+                    };
 
-        });
+                    // Notify all subscribers
+                    webSockets.emit('devices:update', message);
+                    sendNotificationMail(device);
 
+                    // Save history record
+
+                    if (!occupied)
+                    {
+
+                        var duration = now.getTime() - device.occupiedSince.getTime();
+
+                        // Persist in database
+                        db.devices.update(
+                            {_id: deviceId},
+                            {
+                                $addToSet: {
+                                    history: {
+                                        begin: device.occupiedSince,
+                                        end: now,
+                                        duration: duration
+                                    }
+                                }
+                            },
+                            {},
+                            errorHandler);
+
+                    }
+
+                }
+
+            });
     }
 
     function validateEmail(email) {
@@ -225,15 +260,13 @@
 
     function sendNotificationMail(device) {
 
-        if(!device.subscribers)
-        {
+        if (!device.subscribers) {
             return;
         }
 
         var to = '';
-        device.subscribers.forEach(function(subsciber){
-            if (!to)
-            {
+        device.subscribers.forEach(function (subsciber) {
+            if (!to) {
                 to += ', ';
             }
             to += subsciber;
@@ -245,7 +278,7 @@
             to: to, // list of receivers
             subject: device._id + ' is unoccupied', // Subject line
             text: device._id + ' is unoccupied', // plaintext body
-            html: '<b>'+ device._id + 'is unoccupied ✔</b>' // html body
+            html: '<b>' + device._id + 'is unoccupied ✔</b>' // html body
         };
 
         // send mail with defined transport object

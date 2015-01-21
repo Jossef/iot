@@ -12,6 +12,8 @@
             devices: devices,
             playNotificationSound: playNotificationSound,
             showNotification:showNotification,
+            showError:showError,
+            validateEmail:validateEmail,
             go:go
         };
 
@@ -21,6 +23,20 @@
 
         function showNotification(message) {
             growl.success(message);
+        }
+
+        function showError(message) {
+            growl.error(message);
+        }
+
+        function validateEmail(email) {
+            if (!email)
+            {
+                return false;
+            }
+
+            var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
         }
 
         function go(path) {
